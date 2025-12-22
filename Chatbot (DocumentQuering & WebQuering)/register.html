@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DocumentAI Portal - Login/Register</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="shadow-lg rounded-xl p-8 w-full max-w-md space-y-6" style="background-color: #4E5B2D;">
+    <h2 class="custom-heading">ARG DOCUMENTAI</h2>
+
+    <!-- Toggle Buttons -->
+    <div class="flex justify-center space-x-4">
+      <button id="loginTab" onclick="showForm('login')" class="btn-tab btn-primary">Login</button>
+      <button id="registerTab" onclick="showForm('register')" class="btn-tab btn-secondary">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="space-y-4" onsubmit="submitLogin(event)">
+      <input type="email" placeholder="Enter your official mail" id="loginEmail" class="input" required />
+      <input type="password" placeholder="Password" id="loginPassword" class="input" required />
+      <button type="submit" class="btn-primary w-full">Login</button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" class="space-y-4 hidden" onsubmit="submitRegister(event)">
+      <input type="email" placeholder="Enter your official mail" id="registerEmail" class="input" required />
+      <input type="password" placeholder="Set a Strong Password" id="registerPassword" class="input" required />
+      <button type="submit" class="btn-secondary w-full">Register</button>
+    </form>
+
+    <!-- Message Output -->
+    <div id="message" class="text-center text-sm mt-2 text-white"></div>
+  </div>
+
+  <script>
+    function showForm(type) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const loginTab = document.getElementById('loginTab');
+      const registerTab = document.getElementById('registerTab');
+      document.getElementById('message').innerText = "";
+
+      if (type === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        loginTab.classList.add('btn-active');
+        registerTab.classList.remove('btn-active');
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        registerTab.classList.add('btn-active');
+        loginTab.classList.remove('btn-active');
+      }
+    }
+
+    async function submitLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      if (!email.endsWith("@rathi.com")) {
+        document.getElementById("message").innerText = "Email must end with @rathi.com";
+        return;
+    }
+
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Save user info to localStorage
+        localStorage.setItem("user", JSON.stringify({ name: data.name, email: data.email }));
+        // *** Save access modules to localStorage as well ***
+        localStorage.setItem("accessModules", JSON.stringify(data.access_modules || []));
+
+        // Redirect to chat page
+        window.location.href = data.redirect;
+      } else {
+        document.getElementById("message").innerText = data.detail || "Login failed.";
+      }
+    }
+
+    async function submitRegister(e) {
+      e.preventDefault();
+      const email = document.getElementById("registerEmail").value;
+      const password = document.getElementById("registerPassword").value;
+
+      if (!email.endsWith("@rathi.com")) {
+        document.getElementById("message").innerText = "Email must end with @rathi.com";
+        return;
+      }
+
+      const res = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        document.getElementById("message").innerText = "Registration successful. Please login to access chatbot.";
+        showForm('login');
+      } else {
+        document.getElementById("message").innerText = data.detail || "Registration failed.";
+      }
+    }
+
+    // Show login tab by default
+    showForm('login');
+  </script>
+
+  <style>
+    .custom-heading {
+      color: #C49027;
+      font-size: 2.25rem;
+      -webkit-text-stroke: 1.2px #F7D279;
+      font-weight: bold;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+    .input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      background-color: #f9f9f9;
+    }
+    .btn-primary, .btn-secondary {
+      background-color: #C9A227;
+      color: #f9f9f9;
+      border: 2px solid #6D712E;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+    .btn-tab {
+      transition: all 0.2s ease-in-out;
+    }
+    .btn-active {
+      background-color: #f9f9f9 !important;
+      color: #4E5B2D !important;
+      font-weight: bold;
+      border: 2px solid #C9A227;
+    }
+  </style>
+</body>
+</html>
