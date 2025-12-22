@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>ARG Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    #sessionList {
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+    #chatBox > div > div > * {
+      margin-top: 0.25rem !important;
+      margin-bottom: 0.25rem !important;
+      line-height: 1.4 !important;
+    }
+    #chatBox > div > div > p,
+    #chatBox > div > div > ol,
+    #chatBox > div > div > ul,
+    #chatBox > div > div > h1,
+    #chatBox > div > div > h2,
+    #chatBox > div > div > h3,
+    #chatBox > div > div > h4,
+    #chatBox > div > div > h5,
+    #chatBox > div > div > h6 {
+      margin-top: 0.25rem !important;
+      margin-bottom: 0.4rem !important;
+      line-height: 1.5 !important;
+    }
+    #chatBox > div > div ul,
+    #chatBox > div > div ol {
+      list-style-position: inside !important;
+      padding-left: 1.25rem !important;
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    #chatBox > div > div li {
+      margin-bottom: 0.25rem !important;
+    }
+    #chatBox > div > div li p {
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      display: block !important;
+      padding-left: 0 !important;
+    }
+    #chatBox > div > div blockquote,
+    #chatBox > div > div pre,
+    #chatBox > div > div table {
+      margin-top: 0.5rem !important;
+      margin-bottom: 0.5rem !important;
+    }
+    #chatBox div > div[style*="white-space"] {
+      white-space: normal !important;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col sm:flex-row">
+
+  <!-- Sidebar -->
+  <div class="flex flex-col h-screen w-full sm:w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 p-4 hidden sm:block sticky top-0 relative">
+    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">💬 Previous Chats</h2>
+    <ul id="sessionList" class="flex-1 overflow-y-auto space-y-2 text-sm pr-2 pb-28"></ul>
+    <div class="fixed left-0 bottom-0 w-full sm:w-64 bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-4 flex flex-col space-y-2 z-10">
+      <button onclick="startNewSession()" class="w-full px-3 py-2 bg-[#4E5B2D] text-white rounded">
+        + New Chat
+      </button>
+      <button onclick="window.location.href='convert.html'" class="w-full px-3 py-2 bg-[#4E5B2D] text-white rounded">
+        Convert Format
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Browser Banner -->
+    <div id="browserBanner" class="hidden bg-green-700 text-white text-center py-2 text-sm font-medium sticky top-0 z-40">
+      Browser Search is ON - answers will be fetched through a public network
+    </div>
+
+    <!-- Header -->
+    <div class="bg-[#C9A227] dark:bg-[#4E5B2D] text-white p-4 flex justify-between items-center shadow sticky top-0 z-30">
+      <h1 class="text-2xl font-bold">ARG Chatbot</h1>
+      <div class="flex items-center gap-2 text-sm">
+        <span>Logged in as:</span>
+        <span id="userName" class="font-semibold"></span>
+        <button onclick="toggleDarkMode()" class="ml-2 px-2 py-1 bg-gray-700 text-white rounded">🌓</button>
+        <button onclick="logout()" class="ml-2 px-2 py-1 bg-red-600 rounded">Logout</button>
+      </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div id="chatBox" class="flex-grow p-4 overflow-y-auto space-y-4 bg-gray-50 dark:bg-gray-950 text-sm"></div>
+
+    <!-- Input Form -->
+    <form onsubmit="sendMessage(event)" class="flex items-center p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700 gap-3 relative sticky bottom-0 z-30">
+      <textarea
+        id="userInput"
+        placeholder="Ask a question..."
+        class="flex-grow border border-black dark:border-white rounded-2xl px-3 py-2 dark:bg-gray-700 dark:text-white resize-y min-h-[3rem] max-h-40 overflow-auto"
+        rows="3"
+        required
+      ></textarea>
+      <!-- Browser Toggle Button -->
+      <button type="button" id="browserToggleBtn" title="Toggle web search" aria-label="Toggle web search" 
+        class="ml-2 text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white transition">
+        <svg id="browserIcon" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="transparent" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+        </svg>
+      </button>
+      <button type="submit" class="ml-2 px-4 py-2 bg-[#C9A227] text-white rounded"> 
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function styleHtmlContent(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      doc.querySelectorAll('li').forEach(li => {
+        if(li.children.length === 1 && li.children[0].tagName.toLowerCase() === 'p') {
+          const p = li.children[0];
+          while(p.firstChild) li.insertBefore(p.firstChild, p);
+          li.removeChild(p);
+        }
+      });
+      doc.querySelectorAll("table").forEach(table => {
+        table.classList.add("min-w-full", "table-auto", "text-left", "border-collapse", "border", "border-gray-300", "dark:border-gray-600");
+        const thead = table.querySelector("thead");
+        if(thead) {
+          thead.classList.add("bg-gray-100", "dark:bg-gray-700");
+          thead.querySelectorAll("th").forEach(th => th.classList.add("border", "border-gray-300", "dark:border-gray-600", "px-4", "py-2"));
+        }
+        const tbody = table.querySelector("tbody");
+        if(tbody) {
+          tbody.querySelectorAll("td").forEach(td => td.classList.add("border", "border-gray-300", "dark:border-gray-600", "px-4", "py-2"));
+          tbody.querySelectorAll("tr:nth-child(even)").forEach(tr => tr.classList.add("bg-gray-50", "dark:bg-gray-800"));
+        }
+      });
+      doc.querySelectorAll("ol, ul").forEach(list => {
+        list.classList.add("mb-2", "list-inside");
+        if(list.tagName.toLowerCase() === "ul") {
+          list.classList.add("list-disc");
+        } else {
+          list.classList.add("list-decimal");
+        }
+        list.style.listStylePosition = "outside";
+      });
+      doc.querySelectorAll("p").forEach(p => p.classList.add("mb-2", "mt-1", "leading-relaxed"));
+      ["h1","h2","h3","h4","h5","h6"].forEach(tag => doc.querySelectorAll(tag).forEach(h => h.classList.add("mb-2", "mt-2", "leading-tight")));
+      doc.querySelectorAll("*").forEach(el => { if(el.style.whiteSpace === "pre-line") el.style.whiteSpace = "normal"; });
+      
+      return doc.body.innerHTML;
+    }
+
+    let user = JSON.parse(localStorage.getItem("user"));
+    if(!user || !user.email || !user.name) window.location.href = "/static/register.html";
+    document.getElementById("userName").innerText = `${user.name} (${user.email})`;
+    let sessionId = localStorage.getItem("currentSession") || null;
+
+    async function createSession(userId) {
+      const res = await fetch("/save-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      sessionId = data.session_id;
+      localStorage.setItem("currentSession", sessionId);
+      return sessionId;
+    }
+
+    async function initSession() {
+      localStorage.removeItem("currentSession");
+      sessionId = null;
+      if (!sessionId) {
+        sessionId = await createSession(user.email);
+      }
+    }
+
+    async function loadSessionList() {
+      const res = await fetch(`/get-sessions?user_id=${user.email}`);
+      if (!res.ok) return;
+      const sessions = await res.json();
+      const list = document.getElementById("sessionList");
+      list.innerHTML = "";
+      sessions.forEach(({ session_id, title }) => {
+        const li = document.createElement("li");
+        li.className = "text-black dark:text-white cursor-pointer hover:underline";
+        if (session_id) {
+          li.innerText = title && title.trim() !== "" ? title : `New Chat`;
+          li.onclick = () => {
+            sessionId = session_id;
+            localStorage.setItem("currentSession", sessionId);
+            loadChatHistory(session_id);
+          };
+        } else {
+          li.innerText = title && title.trim() !== "" ? title : "Untitled Chat";
+        }
+        list.appendChild(li);
+      });
+    }
+
+    async function loadChatHistory(session_id) {
+      const res = await fetch(`/history?user_id=${user.email}&session_id=${session_id}`);
+      if(!res.ok) return;
+      const messages = await res.json();
+      const chatBox = document.getElementById("chatBox");
+      chatBox.innerHTML = "";
+      messages.forEach(({ role, content }) => appendMessage(role === "bot" ? "bot" : "user", content));
+    }
+
+    async function startNewSession() {
+      await createSession(user.email);
+      document.getElementById("chatBox").innerHTML = "";
+      await loadSessionList();
+    }
+
+    const inputEl = document.getElementById('userInput');
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+    });
+
+    function appendMessage(sender, content, isHtml = false) {
+      const chatBox = document.getElementById("chatBox");
+      const wrapper = document.createElement("div");
+      wrapper.className = sender === "user" ? "flex justify-end items-start" : "flex justify-start items-start";
+      const bubble = document.createElement("div");
+      bubble.className = `max-w-xs sm:max-w-md md:max-w-lg px-4 py-2 rounded-lg break-words ${
+        sender === "user"
+          ? "bg-[#4E5B2D] text-white self-end"
+          : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+      }`;
+      const meta = `<div class="text-xs text-[#C9A227] dark:text-gray-300 mb-1">${sender === "user" ? "You" : "Bot"} · ${new Date().toLocaleTimeString()}</div>`;
+      if(sender === "bot" && !isHtml && /[*_`#\-]/.test(content)) {
+        const converter = new showdown.Converter();
+        let htmlContent = converter.makeHtml(content);
+        htmlContent = styleHtmlContent(htmlContent);
+        bubble.innerHTML = meta + htmlContent;
+      } else if(sender === "bot" && isHtml) {
+        bubble.innerHTML = meta + styleHtmlContent(content);
+      } else {
+        bubble.innerHTML = meta + `<div>${escapeHtml(content)}</div>`;
+      }
+      const avatar = document.createElement("img");
+      avatar.src = sender === "user" ? "user.png" : "ar logo.png";
+      avatar.alt = sender;
+      avatar.className = "w-10 h-10 rounded-full mx-2 mt-2";
+      if(sender === "user") {
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(avatar);
+      } else {
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(bubble);
+      }
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return bubble;
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle("dark");
+    }
+
+    function logout() {
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessModules");
+      localStorage.removeItem("currentSession");
+      window.location.href = "/static/register.html";
+    }
+
+    let inactivityTimeout;
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = setTimeout(() => {
+        alert("You have been logged out due to inactivity.");
+        logout();
+      }, 60 * 60 * 1000);
+    }
+    ["click","mousemove","keydown","scroll","touchstart"].forEach(ev => window.addEventListener(ev, resetInactivityTimer));
+    resetInactivityTimer();
+
+    // === Browser Toggle Logic ===
+    let browserSearchEnabled = false;
+    const browserToggleBtn = document.getElementById('browserToggleBtn');
+    const browserBanner = document.getElementById('browserBanner');
+    const browserIcon = document.getElementById('browserIcon');
+
+    browserToggleBtn.addEventListener('click', () => {
+      browserSearchEnabled = !browserSearchEnabled;
+      if (browserSearchEnabled) {
+        browserIcon.setAttribute("stroke", "green");
+        browserIcon.setAttribute("fill", "lightgreen");
+        browserBanner.classList.remove("hidden");
+      } else {
+        browserIcon.setAttribute("stroke", "currentColor");
+        browserIcon.setAttribute("fill", "transparent");
+        browserBanner.classList.add("hidden");
+      }
+    });
+
+    function isBrowserSearchEnabled() {
+      return browserSearchEnabled;
+    }
+
+    async function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById("userInput");
+      const msg = input.value.trim();
+      if(!msg) return;
+      if(!sessionId) {
+        alert("No session ID. Please refresh the page.");
+        return;
+      }
+      appendMessage("user", msg);
+      input.value = "";
+      appendMessage("bot", "Typing...");
+      try {
+        const accessModulesStr = localStorage.getItem("accessModules") || "[]";
+        const accessModules = JSON.parse(accessModulesStr);
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: msg,
+            session_id: sessionId,
+            user_id: user.email,
+            access_modules: accessModules,
+            browser_mode: isBrowserSearchEnabled()
+          })
+        });
+        const data = await res.json();
+
+        const lastBotMsg = document.querySelector("#chatBox > div:last-child");
+        if(lastBotMsg) lastBotMsg.remove();
+        const answerText = data.answer || "(No response)";
+        const isHtml = answerText.includes("<table") || answerText.includes("<div") || answerText.includes("<p>") || answerText.includes("<ul") || answerText.includes("<ol");
+        appendMessage("bot", answerText, isHtml);
+      } catch(err) {
+        const lastBotMsg = document.querySelector("#chatBox > div:last-child");
+        if(lastBotMsg) lastBotMsg.remove();
+        appendMessage("bot", "Error connecting to chatbot.");
+      }
+    }
+
+    window.onload = async () => {
+      await initSession();
+      await loadSessionList();
+    };
+  </script>
+</body>
+</html>

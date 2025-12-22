@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>ARG DocumentAI Format Converter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col sm:flex-row">
+
+  <div class="flex flex-col h-full w-full sm:w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 p-4 overflow-y-auto hidden sm:block sticky top-0 h-screen">
+    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">⚙️ Format Converter</h2>
+    <button onclick="window.location.href='chat.html'" class="mb-4 px-3 py-2 bg-[#4E5B2D] text-white rounded">
+      ← Back to Chat
+    </button>
+  </div>
+
+  <main class="flex-1 p-6">
+    <h1 class="text-3xl mb-6 text-gray-900 dark:text-white">Document Format Conversion</h1>
+
+    <form id="convertForm" class="max-w-lg space-y-6 bg-white dark:bg-gray-800 p-6 rounded shadow">
+
+      <div>
+        <label for="fileInput" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Upload Document</label>
+        <input id="fileInput" name="fileInput" type="file" accept="image/*,.pdf,.docx" multiple
+          class="block w-full text-sm text-gray-500 
+          file:mr-4 file:py-2 file:px-4
+          file:rounded file:border-0
+          file:text-sm file:font-semibold
+          file:bg-[#4E5B2D] file:text-white
+          hover:file:bg-[#39511A]"
+          required
+        />
+      </div>
+
+      <div>
+        <label for="sourceFormat" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Source Format</label>
+        <select id="sourceFormat" name="sourceFormat" required class="w-full p-2 rounded border dark:bg-gray-700 dark:text-white" onchange="toggleExtractTextCheckbox()">
+          <option value="pdf">PDF</option>
+          <option value="word">Word (.docx)</option>
+          <option value="image">Image (JPG, PNG)</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="targetFormat" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Target Format</label>
+        <select id="targetFormat" name="targetFormat" required class="w-full p-2 rounded border dark:bg-gray-700 dark:text-white">
+          <option value="pdf">PDF</option>
+          <option value="word">Word (.docx)</option>
+          <option value="image">Image (JPG, PNG)</option>
+        </select>
+      </div>
+
+      <div id="extractTextContainer" class="hidden">
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="extractText" name="extract_text_from_pdf_images" class="form-checkbox h-5 w-5 text-[#4E5B2D]">
+          <span class="ml-2 text-gray-700 dark:text-gray-300">Extract text from images when converting PDF to PDF (OCR)</span>
+        </label>
+      </div>
+
+      <div id="extractImagesContainer" class="hidden">
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="extractImagesOnly" name="extract_images_only" class="form-checkbox h-5 w-5 text-[#4E5B2D]">
+          <span class="ml-2 text-gray-700 dark:text-gray-300">Extract images only from PDF</span>
+        </label>
+      </div>
+
+      <button type="submit" class="w-full bg-[#4E5B2D] hover:bg-[#39511A] text-white py-2 rounded font-semibold">
+        Convert Format
+      </button>
+
+    </form>
+
+    <div id="resultOutput" class="mt-6 text-gray-900 dark:text-white"></div>
+
+  </main>
+
+  <script>
+    const form = document.getElementById('convertForm');
+    const resultOutput = document.getElementById('resultOutput');
+    const extractTextContainer = document.getElementById('extractTextContainer');
+    // const extractImagesContainer = document.getElementById('extractImagesContainer');
+
+    function toggleExtractTextCheckbox() {
+      const sourceFormat = document.getElementById('sourceFormat').value;
+      // Show OCR text extraction checkbox only for PDF source
+      if (sourceFormat === 'pdf') {
+        extractTextContainer.classList.remove('hidden');
+        // extractImagesContainer.classList.remove('hidden'); // if you add this feature
+      } else {
+        extractTextContainer.classList.add('hidden');
+        document.getElementById('extractText').checked = false;
+        // extractImagesContainer.classList.add('hidden');
+        // document.getElementById('extractImagesOnly').checked = false;
+      }
+    }
+
+    // Initialize checkbox visibility on page load
+    toggleExtractTextCheckbox();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById('fileInput');
+      const sourceFormat = document.getElementById('sourceFormat').value;
+      const targetFormat = document.getElementById('targetFormat').value;
+      const extractText = document.getElementById('extractText').checked;
+      // const extractImagesOnly = document.getElementById('extractImagesOnly').checked;
+
+      if (fileInput.files.length === 0) {
+        alert("Please upload a file");
+        return;
+      }
+
+      const formData = new FormData();
+
+      if (sourceFormat === 'image') {
+        // Append all selected files as 'files' array
+        for (const file of fileInput.files) {
+          formData.append('files', file);
+        }
+      } else {
+        // Single file expected
+        formData.append('file', fileInput.files[0]);
+      }
+
+      formData.append('sourceFormat', sourceFormat);
+      formData.append('targetFormat', targetFormat);
+
+      if (sourceFormat === 'pdf') {
+        formData.append('extract_text_from_pdf_images', extractText);
+        // formData.append('extract_images_only', extractImagesOnly);
+      }
+
+      resultOutput.textContent = "Converting... Please wait.";
+
+      try {
+        const res = await fetch('/convert-format', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Conversion failed: ${res.statusText}`);
+        }
+
+        const blob = await res.blob();
+
+        // Download converted file
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `converted.${targetFormat === 'word' ? 'docx' : targetFormat}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        resultOutput.textContent = "Conversion successful. File downloaded.";
+
+      } catch (error) {
+        resultOutput.textContent = "";
+        alert(error.message);
+      }
+    });
+  </script>
+
+</body>
+</html>
