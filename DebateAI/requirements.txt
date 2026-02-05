@@ -1,0 +1,8 @@
+streamlit
+networkx
+reportlab
+langchain
+langchain-community
+langchain-ollama
+google-generativeai
+pydantic
