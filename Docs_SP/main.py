@@ -1,9 +1,6 @@
 """
 SP Documentation Agent (Offline, Free, Ollama-based)
 Generates detailed, well-formatted PDF documentation for each stored procedure in a SQL Server database.
-
-Usage:
-  python sp_doc_ollama.py --server localhost --database MyDB --trusted --output ./sp_docs
 """
 
 import os
@@ -40,7 +37,6 @@ def get_onedrive_path():
     return guess_path if os.path.isdir(guess_path) else None
 
 
-#  Added: OneDrive upload helper function
 def upload_to_onedrive(file_path, folder_path):
     """
     Uploads a local file to the user's OneDrive using Microsoft Graph API.
@@ -57,7 +53,6 @@ def upload_to_onedrive(file_path, folder_path):
         "Content-Type": "application/json"
     }
 
-    #  Ensuring the target folder exists
     folder_check_url = f"https://graph.microsoft.com/v1.0/me/drive/root:/{folder_path}"
     check = requests.get(folder_check_url, headers=headers)
     if check.status_code == 404:
@@ -261,7 +256,7 @@ def markdown_to_html_bold(text: str) -> str:
     return text
 
 
-# PDF Generator (with improved design)
+# PDF Generator
 
 def make_pdf(output_path, metadata):
     doc = SimpleDocTemplate(
@@ -479,3 +474,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
