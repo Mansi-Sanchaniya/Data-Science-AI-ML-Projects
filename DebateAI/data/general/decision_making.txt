@@ -1,0 +1,27 @@
+Sound decision-making requires balancing benefits, risks, costs, and ethical considerations.
+
+High-impact decisions should prioritize safety, reversibility, and harm minimization.
+Irreversible actions warrant stricter evaluation standards.
+
+Decisions made under uncertainty should prefer options that preserve future flexibility.
+Optionality reduces long-term risk.
+
+Risk assessment should include both probability and severity of potential outcomes.
+Low-probability but high-impact risks deserve special attention.
+
+Accountability is a critical component of responsible decision-making.
+Clear responsibility for outcomes should be defined before actions are taken.
+
+Human oversight is valuable when decisions affect people, safety, or legal responsibility.
+Automation should augment judgment, not eliminate it in high-stakes contexts.
+
+Trade-offs are unavoidable.
+Effective decisions explicitly acknowledge what is being sacrificed in pursuit of benefits.
+
+Decision quality should be evaluated independently of outcomes.
+Good decisions can lead to bad outcomes, and bad decisions can sometimes appear successful.
+
+Monitoring and feedback mechanisms improve decision quality over time.
+Decisions should be revisited as new information becomes available.
+
+When stakeholder values conflict, transparency about priorities and assumptions improves trust and legitimacy.

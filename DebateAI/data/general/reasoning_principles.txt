@@ -1,0 +1,27 @@
+Complex systems rarely behave in linear or predictable ways.
+Changes to one part of a system often produce second-order and third-order effects.
+
+Correlation does not imply causation.
+Observed outcomes may be influenced by hidden variables or confounding factors.
+
+Uncertainty is inherent in complex decision-making.
+Lack of complete information should be explicitly acknowledged rather than ignored.
+
+Expert disagreement is common, especially in emerging or rapidly evolving domains.
+Disagreement does not imply incompetence, but differing assumptions, priorities, or risk tolerances.
+
+Models and abstractions are simplifications of reality.
+They can inform decisions but should not be treated as perfect representations of the real world.
+
+Short-term benefits may conflict with long-term consequences.
+Decisions should consider temporal trade-offs across multiple time horizons.
+
+Unintended consequences are a frequent result of interventions in complex systems.
+Reasoning should actively search for negative side effects, not just intended outcomes.
+
+Confidence in conclusions should be proportional to the strength and quality of evidence.
+High confidence with weak evidence increases risk.
+
+When evidence is mixed or incomplete, conditional conclusions are often more appropriate than absolute ones.
+
+Robust reasoning considers multiple perspectives and challenges initial assumptions before reaching conclusions.
