@@ -1,0 +1,13 @@
+Autonomous AI systems are designed to perform tasks or make decisions without direct human intervention.
+
+Potential benefits include increased efficiency, scalability, and the ability to operate in environments unsuitable for humans.
+
+Risks include loss of human control, cascading failures, and difficulty assigning responsibility for outcomes.
+
+Autonomous systems may behave unpredictably when operating outside their training conditions.
+
+Human oversight mechanisms can reduce risk but may also limit autonomy benefits.
+
+Clear boundaries between autonomous operation and human intervention are often difficult to define in practice.
+
+Liability and accountability for autonomous decisions remain open challenges in many jurisdictions.

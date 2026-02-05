@@ -1,0 +1,13 @@
+Facial recognition technology enables automated identification or verification of individuals based on facial features.
+
+Potential applications include security, identity verification, and access control.
+
+Concerns include privacy invasion, mass surveillance, and misuse by authorities or private actors.
+
+Accuracy varies across populations, with documented disparities related to race, gender, and age.
+
+False positives can lead to serious consequences such as wrongful identification or denial of services.
+
+Regulatory approaches range from unrestricted deployment to partial or full bans in certain contexts.
+
+Public trust in facial recognition systems depends on transparency, accuracy, and accountability.

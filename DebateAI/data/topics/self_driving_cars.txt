@@ -1,0 +1,13 @@
+Self-driving cars use sensors, machine learning, and control systems to navigate without human drivers.
+
+Potential benefits include reduced traffic accidents, increased mobility, and improved traffic efficiency.
+
+Challenges include handling rare edge cases, adverse weather, and complex urban environments.
+
+System failures can result in severe physical harm or loss of life.
+
+Responsibility for accidents involving autonomous vehicles remains legally complex.
+
+Gradual deployment strategies often involve mixed human and autonomous control.
+
+Public acceptance depends on safety performance and trust in technology providers.
