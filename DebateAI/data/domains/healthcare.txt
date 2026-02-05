@@ -1,0 +1,15 @@
+Healthcare decisions directly affect patient safety, health outcomes, and quality of life.
+
+Medical systems must prioritize accuracy, reliability, and harm minimization over efficiency alone.
+
+Automation in healthcare introduces risks such as misdiagnosis, over-reliance on models, and reduced clinician oversight.
+
+Clinical decision support systems are intended to assist healthcare professionals, not replace medical judgment.
+
+Healthcare data is often incomplete, biased, or noisy, increasing uncertainty in automated decisions.
+
+Ethical considerations include informed consent, fairness in treatment, and protection of patient privacy.
+
+Regulatory standards emphasize validation, traceability, and accountability for medical technologies.
+
+Errors in healthcare systems can have severe and irreversible consequences.

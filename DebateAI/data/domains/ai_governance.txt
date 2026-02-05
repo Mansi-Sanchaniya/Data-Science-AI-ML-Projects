@@ -1,0 +1,15 @@
+AI governance focuses on ensuring that artificial intelligence systems are developed and deployed responsibly.
+
+Key principles of AI governance include transparency, accountability, fairness, safety, and robustness.
+
+Autonomous AI systems introduce risks related to loss of human control, unclear responsibility, and unintended consequences.
+
+High-risk AI applications often require human-in-the-loop or human-on-the-loop oversight mechanisms.
+
+Model limitations, data bias, and distribution shift are common failure modes in deployed AI systems.
+
+Regulatory frameworks increasingly require explainability, auditability, and documentation of AI decisions.
+
+Monitoring and post-deployment evaluation are essential to detect performance degradation and emerging risks.
+
+Governance approaches balance innovation benefits against societal, ethical, and legal risks.
