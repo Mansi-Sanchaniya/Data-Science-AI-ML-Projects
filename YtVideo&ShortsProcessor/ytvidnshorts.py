@@ -41,43 +41,6 @@ model_name = "t5-small"
 model = T5ForConditionalGeneration.from_pretrained(model_name)
 tokenizer = T5Tokenizer.from_pretrained(model_name)
 
-# Function to convert cookies in JSON or TXT format to Netscape format
-def convert_cookies_to_netscape(cookies_file):
-    try:
-        if cookies_file.name.endswith('.json'):
-            cookies = json.load(cookies_file)
-        elif cookies_file.name.endswith('.txt'):
-            cookies = []
-            for line in cookies_file.readlines():
-                if line.strip() and not line.startswith('#'):
-                    parts = line.strip().split('\t')
-                    cookies.append({
-                        'domain': parts[0],
-                        'name': parts[5],
-                        'value': parts[6],
-                        'path': parts[2],
-                        'expirationDate': parts[4] if len(parts) > 4 else None
-                    })
-        else:
-            raise ValueError("Invalid cookie file format. Only JSON or TXT are supported.")
-
-        # Convert cookies to Netscape format
-        netscape_cookies = []
-        for cookie in cookies:
-            expiry = cookie.get('expiry', '')
-            if expiry:
-                expiry = str(int(expiry))
-            netscape_cookies.append(
-                f"{cookie['domain']}\tTRUE\t{cookie['path']}\t{expiry}\t{cookie['name']}\t{cookie['value']}"
-            )
-
-        return netscape_cookies
-
-    except Exception as e:
-        st.error(f"Error converting cookies: {str(e)}")
-        return None
-
-
 # Function to download a YouTube video using yt-dlp and a cookie file
 def download_video(url, cookie_file=None):
     download_status = ""  # Initialize download_status to avoid referencing undefined variable
@@ -93,11 +56,6 @@ def download_video(url, cookie_file=None):
     # Set up yt-dlp options, saving video to the temp directory
     ydl_opts = {
         'outtmpl': os.path.join(temp_dir, '%(title)s_%(id)s.%(ext)s'),  # Save video to the temp directory
-    }
-
-    # Add cookie file to yt-dlp options if provided
-    if cookie_file:
-        ydl_opts['cookiefile'] = cookie_file
 
     # Use yt-dlp to download the video
     with YoutubeDL(ydl_opts) as ydl:
@@ -138,18 +96,6 @@ def get_transcript(video_url):
     except Exception as e:
         return None
 
-
-# Function to format the transcript into a readable form
-def format_transcript(transcript):
-    formatted_transcript = []
-    for entry in transcript:
-        start_time = entry['start']  # Timestamp
-        duration = entry['duration']
-        text = entry['text']  # Transcript text
-        formatted_transcript.append(f"[{start_time}s - {start_time + duration}s] {text}")
-    return formatted_transcript
-
-
 # Function to process input (multiple playlists or individual videos) and fetch transcripts for all videos
 def process_input(input_urls):
     video_urls = get_video_urls_multiple(input_urls)
@@ -167,11 +113,6 @@ def process_input(input_urls):
             video_url = future_to_video[future]
             try:
                 transcript = future.result()
-                if transcript:
-                    formatted_transcript = format_transcript(transcript)
-                    video_chunks[video_url] = formatted_transcript  # Store by video URL
-                else:
-                    video_chunks[video_url] = ["Transcript not available"]
             except Exception as e:
                 video_chunks[video_url] = ["Transcript extraction failed"]
                 print(f"Error getting transcript for {video_url}: {e}")
@@ -181,13 +122,6 @@ def process_input(input_urls):
         all_transcripts.append(
             {"video_url": video_url, "transcript": video_chunks.get(video_url, ["No transcript found"])})
     return all_transcripts
-
-exclude_words = {"promotion", "offer", "limited-time" "buy", "buy now", "ad", "discount", "sale"}
-
-def remove_stop_words(text):
-    """Remove stop words from the text."""
-    words = text.split()
-    return " ".join([word for word in words if word.lower() not in stop_words])
 
 def remove_stop_words_and_excluded_words(texts, exclude_words):
     """Remove stop words and excluded words from a batch of texts."""
@@ -213,14 +147,6 @@ def is_relevant_to_query(snippet, query, threshold=0.35):
     common_words = query_words.intersection(snippet_words)
     return len(common_words) / len(query_words) > threshold
 
-
-def is_relevant_to_query_embedding(snippet, query, model, threshold=0.35):
-    """Check if the snippet is relevant to the query using semantic similarity."""
-    query_embedding = model.encode(query)
-    snippet_embedding = model.encode(snippet)
-
-    similarity = cosine_similarity([query_embedding], [snippet_embedding])
-    return similarity[0][0] > threshold  # Check if similarity score exceeds the threshold
 
 def process_query(query, stored_transcripts, threshold=0.3):
     if not query:
@@ -254,13 +180,6 @@ def process_query(query, stored_transcripts, threshold=0.3):
                         text = parts[1].strip()
                         # Extract start_time and end_time from time_text
                         time_parts = time_text.split('-')  # Split at the dash
-                    try:
-                        start_time = float(time_parts[0].replace('s', '').strip())  # Convert to float and remove 's'
-                        end_time = float(time_parts[1].replace('s', '').strip())  # Convert to float and remove 's'
-                    except ValueError:
-                        # Default to 0.0 if conversion fails
-                        start_time = 0.0
-                        end_time = 0.0
 
                     # Create a dictionary for the line
                     line = {'text': text, 'start_time': start_time, 'end_time': end_time}
@@ -325,8 +244,6 @@ def process_query(query, stored_transcripts, threshold=0.3):
     if current_snippet:
         final_snippets.append((current_video_url, current_snippet.strip(), current_start_time, current_end_time))
 
-
-
     # Ensure that start_time and end_time are valid floats before formatting
     formatted_relevant_snippets = []
     for (video_url, snippet, start_time, end_time) in final_snippets:
@@ -338,34 +255,6 @@ def process_query(query, stored_transcripts, threshold=0.3):
 
     return formatted_relevant_snippets
 
-
-def extract_timestamps_from_section(section):
-    try:
-        # Strip any leading/trailing whitespaces
-        section = section.strip()
-
-        # Check if the section contains timestamp information in the correct format
-        if '[' not in section or ']' not in section:
-            return None  # Skip sections that do not contain timestamps in '[start_time - end_time]' format
-
-        # Extract the timestamp part of the section (the part inside the brackets)
-        timestamp_part = section[section.find('[') + 1:section.find(']')].strip()  # Extract content inside brackets
-        times = timestamp_part.split(" - ")
-
-        if len(times) != 2:
-            return None  # Return None to skip this section
-
-        # Clean timestamps and remove any unnecessary decimal precision
-        start_time = float(times[0].strip().replace("s", ""))
-        end_time = float(times[1].strip().replace("s", ""))
-
-        start_time = round(start_time, 2)
-        end_time = round(end_time, 2)
-
-        return start_time, end_time
-    except Exception as e:
-        print(f"Error extracting timestamps from section '{section}'. Exception: {e}")
-        return None  # Return None in case of an error
 
 
 def extract_video_segments(input_string):
@@ -396,118 +285,6 @@ def extract_video_segments(input_string):
     return video_segments
 
 
-# Helper: Extract short clip
-def create_short_clip(video_path, transcript, keyword, min_duration=15, max_duration=60):
-    # Load the video file using moviepy
-    video = VideoFileClip(video_path)
-    clips = []
-    occurrences = []
-
-    total_duration = 0  # Track total duration of selected clips
-    max_padding = 7  # Initial padding value for the end
-
-    for segment in transcript:
-        # Parse the segment string to extract start, end, and text
-        match = re.match(r'\[(\d+\.\d+)s\s*-\s*(\d+\.\d+)s\]\s*(.+)', segment)
-        if match:
-            start = float(match.group(1))  # Extract start time
-            end = float(match.group(2))  # Extract end time
-            text = match.group(3).strip()  # Extract text content
-
-            # Normalize text and keyword for comparison
-            normalized_text = " ".join(text.split())
-            normalized_keyword = " ".join(keyword.split())
-
-            # Check if the normalized keyword exists in normalized text
-            if normalized_keyword.lower() in normalized_text.lower():
-                # Add padding to start and end times
-                start = max(0.0, start - 3)  # 5 seconds padding before the clip
-                end = min(start + max_duration, end + max_padding)  # Add padding to the end
-
-                duration = end - start
-                # Adjust duration if needed
-                if duration > max_duration:
-                    end = start + max_duration  # Trim the end if it's too long
-                elif duration < min_duration:
-                    start = end - min_duration  # Trim the start if it's too short
-
-
-                final_duration = end - start
-
-                # Ensure the duration is within the allowed range
-                if min_duration <= final_duration <= max_duration:
-                    # Check if the clip already exists in the list
-                    if not any(occ['start'] == start and occ['end'] == end for occ in occurrences):
-                        # Check for partial overlap with previous clips
-                        for prev_clip in clips:
-                            prev_start, prev_end = prev_clip[0], prev_clip[1]
-
-                            # Check for overlap (partial or complete)
-                            if not (end <= prev_start or start >= prev_end):
-                                print(
-                                    f"Partial overlap detected: Clip {start}-{end} overlaps with {prev_start}-{prev_end}")
-                                # Adjust the start or end time to avoid overlap
-                                if start < prev_end:
-                                    start = prev_end  # Shift start to avoid overlap
-                                if end > prev_start:
-                                    end = prev_start  # Shift end to avoid overlap
-                                break  # Only adjust once, don't check more clips
-
-                        # Adjust clip duration
-                        final_duration = end - start
-                        if final_duration > max_duration:
-                            end = start + max_duration  # Trim if too long
-                        elif final_duration < min_duration:
-                            start = end - min_duration  # Trim if too short
-
-                        # Ensure the duration is valid
-                        if min_duration <= final_duration <= max_duration:
-                            # Extract the short clip and resize it
-                            short_clip = video.subclip(start, end).resize(height=1080, width=1920)
-                            clips.append((start, end, short_clip))  # Append the clip to the list
-                            occurrences.append({
-                                'start': start,
-                                'end': end,
-                                'text': text,
-                                'duration': final_duration
-                            })
-                            print(f"Adding clip: Start: {start}, End: {end}, Text: {text}")
-                        else:
-                            print(f"Clip too short or too long after adjustment: Start: {start}, End: {end}")
-                    else:
-                        print(f"Duplicate clip detected: Start: {start}, End: {end}")
-
-    # Combine the clips
-    if clips:
-        # Remove duplicate clips by ensuring unique start and end times
-        unique_clips = []
-        seen = set()
-
-        for occ in occurrences:
-            key = (occ['start'], occ['end'])
-            if key not in seen:
-                seen.add(key)
-                unique_clips.append(occ)
-
-        # Create unique clip list
-        clips = [video.subclip(occ['start'], occ['end']).resize(height=1080, width=1920) for occ in unique_clips]
-
-        # Combine all clips
-        combined_clip = concatenate_videoclips(clips, method="compose")  # Use compose for compatibility
-        combined_duration = combined_clip.duration
-
-        print(f"Total Combined Duration: {combined_duration} seconds")
-
-        # Trim the combined video to 60 seconds if it's too long
-        if combined_duration > max_duration:
-            combined_clip = combined_clip.subclip(0, max_duration)
-            print(f"Trimmed Combined Duration: {combined_clip.duration} seconds")
-
-        return combined_clip
-    else:
-        print("No valid clips found for the given keyword.")
-        return None
-
 import moviepy.editor as mp
 from moviepy.editor import VideoFileClip
 
@@ -522,16 +299,6 @@ def clip_and_merge_videos(segments, downloaded_video_paths, output_filename):
     # Full output path for the final video
     output_path = os.path.join(temp_dir, output_filename)
     temp_clips = []
-
-    # Extract video IDs from the downloaded video paths
-    video_id_to_path = {}
-    for path in downloaded_video_paths:
-        # Extract video ID from the filename assuming format "temp_video\\<title>_<video_id>.mp4"
-        title_with_id = os.path.basename(path).replace(".mp4", "")
-        video_id_match = re.search(r"[A-Za-z0-9_-]{11}$", title_with_id)  # Match video ID at the end
-        if video_id_match:
-            video_id = video_id_match.group()
-            video_id_to_path[video_id] = path
 
     # Process each segment
     for segment in segments:
@@ -553,28 +320,6 @@ def clip_and_merge_videos(segments, downloaded_video_paths, output_filename):
         # Ensure the file exists before proceeding
         if not os.path.exists(downloaded_video_path):
             raise FileNotFoundError(f"Video file not found at: {downloaded_video_path}")
-
-
-        # Using moviepy to clip both audio and video
-        video_clip = mp.VideoFileClip(downloaded_video_path)
-        # Ensure that the end_time does not exceed the video's duration
-        # Ensure that start_time and end_time are within the video duration
-        video_duration = video_clip.duration
-        start_time = min(start_time, video_duration)
-        end_time = min(end_time, video_duration)
-
-        if start_time >= end_time:
-            raise ValueError(f"Invalid time range: start_time ({start_time}) should be less than end_time ({end_time})")
-
-        video_clip = video_clip.subclip(start_time, end_time)
-        min_clip_duration = 1.0
-        # Check the duration of the clip before adding it to the list
-        clip_duration = video_clip.duration
-        if clip_duration < min_clip_duration:
-            st.warning(
-                f"Skipping clip with duration {clip_duration} seconds, as it's below the minimum threshold of {min_clip_duration} seconds.")
-            video_clip.close()
-            continue  # Skip this clip if its duration is too small
 
         temp_clips.append(video_clip)
         clip_duration = video_clip.duration
@@ -712,11 +457,6 @@ def main():
         input_urls = st.text_input(
             "Enter YouTube Playlist(s) or Video URL(s) or both (comma-separated): \n\n Example of link: https://www.youtube.com/watch?v=abc123xyz or https://www.youtube.com/playlist?list=xyz456abc")
 
-        if 'stored_transcripts' not in st.session_state:
-            st.session_state.stored_transcripts = []
-        if 'transcript_text' not in st.session_state:
-            st.session_state.transcript_text = ""
-
         # Initialize session state for queries if not already initialized
         if "queries" not in st.session_state:
             st.session_state["queries"] = [""]  # Start with one query box
@@ -739,8 +479,6 @@ def main():
                 if input_urls:
                     st.session_state.stored_transcripts = process_input(input_urls)
                     st.success("Transcripts extracted successfully.")
-                    if st.session_state.stored_transcripts:
-                        transcript_text = ""
                         for video in st.session_state.stored_transcripts:
                             transcript_text += f"\nTranscript for video {video['video_url']}:\n"
                             if isinstance(video['transcript'], list):
@@ -749,37 +487,12 @@ def main():
                             else:
                                 transcript_text += video['transcript'] + "\n"
                             transcript_text += "-" * 50 + "\n"
-                        st.session_state.transcript_text = transcript_text
-
-
-
                     st.session_state.query_list = [q for q in queries if q.strip()]
 
                     if not st.session_state.query_list:
                         st.error("Please provide at least one valid query.")
 
-                    # Process each query independently
-                    for query in st.session_state.query_list:
-                        if query not in st.session_state["query_output"]:  # Skip already processed queries
-                            # Simulate transcript fetching and processing for the query
-                            results = process_query(query, st.session_state.stored_transcripts)
-
-                            if results:
-                                st.session_state["query_output"][query] = results
-                                st.success("Query Processed Sucessfully")
-                            else:
-                                st.session_state["query_output"][query] = "No relevant content found for the query."
-
-                downloaded_video_paths = []
-
-                # Ensure that `input_urls` is set and split correctly
-                if input_urls:
-                    for url in input_urls.split(","):
-                        url = url.strip()
-                        # Call the download_video function to download the video and get the path
-                        download_status, downloaded_video_path = download_video(url)
-                        if downloaded_video_path:
-                            downloaded_video_paths.append(downloaded_video_path)
+                downloaded_video_paths = [])
 
                 if 'query_output' in st.session_state and st.session_state.query_output:
                     for query, query_output in st.session_state.query_output.items():
